@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="心脏病智能分析与预测",
+    page_title="心脏病风险智能分析与预测系统",
     layout="wide",
     initial_sidebar_state="expanded"
 )
