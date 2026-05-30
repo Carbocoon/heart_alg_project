@@ -9,7 +9,19 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from mlxtend.frequent_patterns import apriori, association_rules
 
-st.set_page_config(page_title="心脏病智能分析与预测", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(
+    page_title="心脏病风险智能分析与预测系统",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+def load_css(file_name):
+    with open(file_name, 'r', encoding='utf-8') as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+css_path = os.path.join(os.path.dirname(__file__), "style.css")
+if os.path.exists(css_path):
+    load_css(css_path)
 
 DATA_DIR = "data"
 CLEANED_DATA_PATH = os.path.join(DATA_DIR, "cleaned_heart.csv")
