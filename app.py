@@ -8,6 +8,7 @@ from routes.predict import predict_bp
 from routes.clustering import clustering_bp
 from routes.data import data_bp
 from routes.performance import performance_bp
+from routes.rules import rules_bp
 
 app = Flask(__name__)
 
@@ -18,6 +19,7 @@ app.register_blueprint(predict_bp, url_prefix='/api/predict')
 app.register_blueprint(clustering_bp, url_prefix='/api/clustering')
 app.register_blueprint(data_bp, url_prefix='/api/data')
 app.register_blueprint(performance_bp, url_prefix='/api')
+app.register_blueprint(rules_bp, url_prefix='/api')
 
 @app.route('/')
 def index():

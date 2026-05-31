@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     else if (targetId === 'clusteringAnalysis') { loadClusteringData(); }
                     else if (targetId === 'dataView') { loadDataView(); }
                     else if (targetId === 'predict') { /* 无需自动加载 */ }
+                    else if (targetId === 'associationRules'){ /* 无需自动加载 */ }
                 } else {
                     sec.classList.remove("active");
                 }
@@ -497,4 +498,96 @@ function loadModelPerformance() {
 const perfModal = document.getElementById('performanceModal');
 if (perfModal) {
     perfModal.addEventListener('shown.bs.modal', loadModelPerformance);
+}
+
+// 关联规则功能
+const minSupportSlider = document.getElementById('min-support');
+const minConfidenceSlider = document.getElementById('min-confidence');
+const supportValue = document.getElementById('support-value');
+const confidenceValue = document.getElementById('confidence-value');
+const mineBtn = document.getElementById('mine-rules-btn');
+const rulesResultDiv = document.getElementById('rules-result');
+const rulesLoadingDiv = document.getElementById('rules-loading');
+const exportBtn = document.getElementById('export-rules-btn');
+
+if (minSupportSlider) {
+    minSupportSlider.addEventListener('input', function() {
+        supportValue.innerText = this.value;
+    });
+    minConfidenceSlider.addEventListener('input', function() {
+        confidenceValue.innerText = this.value;
+    });
+}
+
+async function mineRules() {
+    const minSupport = parseFloat(minSupportSlider.value);
+    const minConfidence = parseFloat(minConfidenceSlider.value);
+    rulesLoadingDiv.style.display = 'block';
+    rulesResultDiv.innerHTML = '';
+    exportBtn.style.display = 'none';
+    try {
+        const response = await fetch('/api/rules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ min_support: minSupport, min_confidence: minConfidence })
+        });
+        const data = await response.json();
+        rulesLoadingDiv.style.display = 'none';
+        if (data.success) {
+            if (data.rules.length === 0) {
+                rulesResultDiv.innerHTML = '<div class="alert alert-info">未找到符合条件的规则，请降低支持度或置信度。</div>';
+                return;
+            }
+            // 构建表格
+            let html = '<div class="table-responsive"><table class="table table-bordered table-striped"><thead><tr>';
+            html += '<th>前提 (Antecedents)</th><th>结论 (Consequents)</th><th>支持度</th><th>置信度</th><th>提升度</th></tr></thead><tbody>';
+            data.rules.forEach(rule => {
+                html += `<tr>
+                    <td>${rule.antecedents}</td>
+                    <td>${rule.consequents}</td>
+                    <td>${rule.support.toFixed(3)}</td>
+                    <td>${rule.confidence.toFixed(3)}</td>
+                    <td>${rule.lift.toFixed(2)}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            rulesResultDiv.innerHTML = html;
+            exportBtn.style.display = 'inline-block';
+            // 存储规则数据以供导出
+            window.currentRules = data.rules;
+        } else {
+            rulesResultDiv.innerHTML = `<div class="alert alert-danger">挖掘失败: ${data.error}</div>`;
+        }
+    } catch (err) {
+        rulesLoadingDiv.style.display = 'none';
+        rulesResultDiv.innerHTML = '<div class="alert alert-danger">网络错误，请重试。</div>';
+    }
+}
+
+if (mineBtn) {
+    mineBtn.addEventListener('click', mineRules);
+}
+
+// 导出 CSV
+function exportRulesToCSV() {
+    if (!window.currentRules || window.currentRules.length === 0) return;
+    const headers = ['antecedents', 'consequents', 'support', 'confidence', 'lift'];
+    const rows = window.currentRules.map(rule => [rule.antecedents, rule.consequents, rule.support, rule.confidence, rule.lift]);
+    let csvContent = headers.join(',') + '\n';
+    rows.forEach(row => {
+        csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
+    });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', 'association_rules.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+if (exportBtn) {
+    exportBtn.addEventListener('click', exportRulesToCSV);
 }
