@@ -101,34 +101,48 @@ def generate_dim_patient(df):
     
     return dim_df
 
-def etl_to_sqlite(cleaned_df):
+def etl_to_sqlite(df, append=True):
     """
-    ETL 主函数：将 Pandas DataFrame 转换为星型模型结构并写入 SQLite 库
+    将清洗后的 DataFrame 追加到数据仓库。
+    如果 append=True，则只插入新数据，保留旧数据。
+    如果 append=False，则清空表后重新插入（用于回滚或初始化）。
     """
     conn = get_connection()
     try:
-        # 1. 建表初始化
-        init_db(conn)
+        if not append:
+            # 清空表（用于回滚时重建）
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM fact_health_record")
+            cursor.execute("DELETE FROM dim_patient")
+            conn.commit()
         
-        # 2. 转换 (Transform): 构建维度表数据
-        dim_patient_df = generate_dim_patient(cleaned_df)
+        # 如果维度表为空，需要先重建结构（但保留已有表结构）
+        # 实际上表已经存在，我们只需要插入数据
         
-        # 3. 转换 (Transform): 构建事实表数据
-        # 事实表继承宽表的大部分特征，并连接维度表的外键
-        fact_df = cleaned_df.copy()
-        fact_df.insert(0, 'patient_key', dim_patient_df['patient_key'])
+        # 生成维度表数据（基于本次要插入的 df）
+        dim_df = generate_dim_patient(df)
+        # 为每个新患者生成新的 patient_key（自增）
+        # 注意：需要获取当前最大的 patient_key，然后递增
+        cursor = conn.cursor()
+        cursor.execute("SELECT MAX(patient_key) FROM dim_patient")
+        max_key = cursor.fetchone()[0]
+        if max_key is None:
+            max_key = 0
+        dim_df['patient_key'] = range(max_key + 1, max_key + 1 + len(dim_df))
         
-        # 4. 加载 (Load): 使用 Pandas 的 to_sql 进行批量快速插入
-        # 通过 if_exists='append' 和 index=False 将数据直接装载，自增键由 SQLite 自动接管
-        dim_patient_df.to_sql('dim_patient', conn, if_exists='append', index=False)
+        # 插入维度表
+        dim_df.to_sql('dim_patient', conn, if_exists='append', index=False)
+        
+        # 事实表：关联 patient_key
+        fact_df = df.copy()
+        fact_df.insert(0, 'patient_key', dim_df['patient_key'])
         fact_df.to_sql('fact_health_record', conn, if_exists='append', index=False)
         
         total_records = len(fact_df)
-        print(f"[ETL Success] 成功处理并入库 {total_records} 条事实记录。")
+        print(f"[ETL Success] 追加 {total_records} 条事实记录。")
         return total_records
-        
     except Exception as e:
-        print(f"[ETL Error] 数据库加载失败: {e}")
+        print(f"[ETL Error] {e}")
         raise
     finally:
         conn.close()

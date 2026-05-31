@@ -1,0 +1,580 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>心脏病 - 智能分析预警平台</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background-color: #2c3e50;
+        }
+
+        .sidebar a {
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 15px 20px;
+            display: block;
+            border-left: 4px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #34495e;
+            color: #fff;
+            border-left-color: #3498db;
+        }
+
+        .sidebar .navbar-brand {
+            color: #fff;
+            font-size: 1.4rem;
+            padding: 20px;
+            font-weight: bold;
+            border-bottom: 1px solid #34495e;
+            margin-bottom: 10px;
+        }
+
+        .main-content {
+            padding: 20px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #f1f3f5;
+            font-weight: bold;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .kpi-card {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .kpi-title {
+            color: #6c757d;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .kpi-icon {
+            font-size: 2.5rem;
+            color: #3498db;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            height: 350px;
+            width: 100%;
+        }
+
+        /* SPA sections */
+        .spa-section {
+            display: none;
+        }
+
+        .spa-section.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 d-none d-md-block sidebar px-0">
+                <div class="navbar-brand">
+                    <i class="fas fa-heartbeat me-2"></i> 智能心脏病预警
+                </div>
+                <div class="nav flex-column mt-3">
+                    <a href="#" class="nav-link active" data-target="dashboard">
+                        <i class="fas fa-chart-pie me-2"></i> 态势大屏
+                    </a>
+                    <a href="#" class="nav-link" data-target="dataImport">
+                        <i class="fas fa-upload me-2"></i> 数据导入
+                    </a>
+                    <a href="#" class="nav-link" data-target="clusteringAnalysis">
+                        <i class="fas fa-project-diagram me-2"></i> 聚类分析
+                    </a>
+                    <a href="#" class="nav-link" data-target="predict">
+                        <i class="fas fa-stethoscope me-2"></i> 实时预测
+                    </a>
+                    <a href="#" class="nav-link" data-target="dataView">
+                        <i class="fas fa-database me-2"></i> 数据概览
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto px-4 main-content">
+
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="spa-section active">
+                    <div
+                        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                        <h1 class="h3">数据态势感知大屏</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="loadDashboardData()">
+                                <i class="fas fa-sync-alt me-1"></i> 刷新数据
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KPIs -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card kpi-card">
+                                <i class="fas fa-users kpi-icon"></i>
+                                <div class="kpi-title">总患者记录数</div>
+                                <div class="kpi-value" id="kpi-total">--</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card kpi-card">
+                                <i class="fas fa-exclamation-triangle kpi-icon text-danger"></i>
+                                <div class="kpi-title">心脏病患病率</div>
+                                <div class="kpi-value" id="kpi-rate">--</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card kpi-card">
+                                <i class="fas fa-calendar-alt kpi-icon text-success"></i>
+                                <div class="kpi-title">平均年龄</div>
+                                <div class="kpi-value" id="kpi-age">--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">年龄分布情况</div>
+                                <div class="card-body">
+                                    <div id="chart-age" class="chart-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">性别与患病关系</div>
+                                <div class="card-body">
+                                    <div id="chart-sex" class="chart-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- New Row for More Charts -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">胸痛类型分布</div>
+                                <div class="card-body">
+                                    <div id="chart-cp" class="chart-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">空腹血糖与患病关系</div>
+                                <div class="card-body">
+                                    <div id="chart-fbs" class="chart-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadDashboardData()">
+                            <i class="fas fa-sync-alt me-1"></i> 刷新数据
+                        </button>
+                        <button type="button" class="btn btn-sm btn-info ms-2" data-bs-toggle="modal"
+                            data-bs-target="#performanceModal">
+                            <i class="fas fa-chart-line me-1"></i> 模型性能
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Data Import Section -->
+                <section id="dataImport" class="spa-section">
+                    <div
+                        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                        <h1 class="h3">数据导入与清洗</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header"><i class="fas fa-upload me-2"></i> 上传 CSV 文件</div>
+                                <div class="card-body">
+                                    <form id="upload-form">
+                                        <div class="mb-3">
+                                            <label for="fileInput" class="form-label">选择心脏病数据集（CSV 格式）：</label>
+                                            <input class="form-control" type="file" id="fileInput" name="file"
+                                                accept=".csv" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary" id="upload-btn">
+                                              <i class="fas fa-cloud-upload-alt me-1"></i> 上传并预览
+                                          </button>
+                                          <button type="button" class="btn btn-danger ms-2" id="rollback-import">
+                                              <i class="fas fa-undo me-1"></i> 撤销上次导入
+                                          </button>
+                                    </form>
+                                    <div id="upload-result" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-info text-white"><i class="fas fa-info-circle me-2"></i> 操作说明
+                                </div>
+                                <div class="card-body">
+                                    <p>1. 选择 CSV 文件，点击“上传并预览”。<br>
+                                        2. 系统会展示清洗后的数据统计和前10行。<br>
+                                        3. 确认无误后，点击“确认导入”将数据写入系统。<br>
+                                        4. 如需回滚，点击“撤销上次导入”。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 预览区域（初始隐藏） -->
+                    <div id="preview-area" style="display: none;" class="mt-4">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">数据预览（请确认是否导入）</div>
+                            <div class="card-body">
+                                <div class="row mb-3" id="preview-stats"></div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered" id="preview-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>年龄</th>
+                                                <th>性别</th>
+                                                <th>血压</th>
+                                                <th>胆固醇</th>
+                                                <th>患病</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3">
+                                    <button id="confirm-import" class="btn btn-success me-2">确认导入</button>
+                                    <button id="cancel-import" class="btn btn-warning me-2">取消</button>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Data Overview Section -->
+                <section id="dataView" class="spa-section">
+                    <div
+                        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                        <h1 class="h3">数据概览</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-sm btn-outline-primary" id="refreshOverviewBtn">
+                                <i class="fas fa-sync-alt me-1"></i> 刷新概览
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 统计卡片（新增） -->
+                    <div class="row mb-4" id="overview-stats">
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <div class="card text-center p-2">
+                                <div class="card-body">
+                                    <h6 class="text-muted">总记录数</h6>
+                                    <h4 class="text-primary" id="stat-total">--</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <div class="card text-center p-2">
+                                <div class="card-body">
+                                    <h6 class="text-muted">患病率</h6>
+                                    <h4 class="text-danger" id="stat-disease">--</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <div class="card text-center p-2">
+                                <div class="card-body">
+                                    <h6 class="text-muted">男性比例</h6>
+                                    <h4 class="text-info" id="stat-male">--</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <div class="card text-center p-2">
+                                <div class="card-body">
+                                    <h6 class="text-muted">平均年龄</h6>
+                                    <h4 id="stat-age">--</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <div class="card text-center p-2">
+                                <div class="card-body">
+                                    <h6 class="text-muted">平均血压</h6>
+                                    <h4 id="stat-bp">--</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <div class="card text-center p-2">
+                                <div class="card-body">
+                                    <h6 class="text-muted">平均胆固醇</h6>
+                                    <h4 id="stat-chol">--</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 数据表格（原有，保留） -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-table me-2"></i> 清洗后数据表（前10行）</span>
+                            <button class="btn btn-sm btn-primary" id="refreshDataBtn">
+                                <i class="fas fa-sync-alt me-1"></i> 刷新表格
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped" id="dataTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>年龄</th>
+                                            <th>性别</th>
+                                            <th>胸痛类型</th>
+                                            <th>静息血压</th>
+                                            <th>胆固醇</th>
+                                            <th>空腹血糖</th>
+                                            <th>心电图</th>
+                                            <th>最大心率</th>
+                                            <th>运动心绞痛</th>
+                                            <th>ST段压低</th>
+                                            <th>ST段斜率</th>
+                                            <th>主要血管数</th>
+                                            <th>地中海贫血</th>
+                                            <th>疾病状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dataTableBody">
+                                        <tr>
+                                            <td colspan="15" class="text-center">加载中...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- Predict Section -->
+                <section id="predict" class="spa-section">
+                    <div
+                        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                        <h1 class="h3">实时预测与诊断
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">输入患者指标
+                                    <div class="card-body">
+                                        <form id="predict-form">
+                                            <div class="row mb-2">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">年龄 (Age)</label>
+                                                    <input type="number" class="form-control form-control-sm" name="age"
+                                                        required value="50" min="1" max="120">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">胆固醇(Chol)</label>
+                                                    <input type="number" class="form-control form-control-sm"
+                                                        name="chol" required value="200">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">运动心绞痛(Exang)</label>
+                                                    <select class="form-select form-select-sm" name="exang">
+                                                        <option value="0">无(0)</option>
+                                                        <option value="1">有(1)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">性别 (Sex)</label>
+                                                    <select class="form-select form-select-sm" name="sex">
+                                                        <option value="1">男(1)</option>
+                                                        <option value="0">女(0)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">空腹血糖(FBS)</label>
+                                                    <select class="form-select form-select-sm" name="fbs">
+                                                        <option value="0">
+                                                            <=120mg /dl (0)</option>
+                                                        <option value="1">>120mg/dl (1)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">ST段下降(Oldpeak)</label>
+                                                    <input type="number" step="0.1" class="form-control form-control-sm"
+                                                        name="oldpeak" required value="1.0">
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">胸痛类型 (CP)</label>
+                                                    <select class="form-select form-select-sm" name="cp">
+                                                        <option value="0">类型 0</option>
+                                                        <option value="1">类型 1</option>
+                                                        <option value="2">类型 2</option>
+                                                        <option value="3">类型 3</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">静息心电图(RestECG)</label>
+                                                    <select class="form-select form-select-sm" name="restecg">
+                                                        <option value="0">正常 (0)</option>
+                                                        <option value="1">异常 (1)</option>
+                                                        <option value="2">左室肥大 (2)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">ST段斜率(Slope)</label>
+                                                    <select class="form-select form-select-sm" name="slope">
+                                                        <option value="0">下降 (0)</option>
+                                                        <option value="1">平坦 (1)</option>
+                                                        <option value="2">上升 (2)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">静息血压(TrestBPS)</label>
+                                                    <input type="number" class="form-control form-control-sm"
+                                                        name="trestbps" required value="120">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">最大心率(Thalach)</label>
+                                                    <input type="number" class="form-control form-control-sm"
+                                                        name="thalach" required value="150">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">透视血管数/贫血 (CA,Thal)</label>
+                                                    <div class="d-flex gx-2">
+                                                        <input type="number"
+                                                            class="form-control form-control-sm w-50 me-1" name="ca"
+                                                            value="0" min="0" max="4">
+                                                        <input type="number" class="form-control form-control-sm w-50"
+                                                            name="thal" value="2" min="0" max="3">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary w-100"><i
+                                                    class="fas fa-bolt"></i> 智能预测</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">预测结果</div>
+                                    <div class="card-body text-center" id="result-container">
+                                        <p class="text-muted mt-5">提交表单后显示结果</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </section>
+
+                <!-- Clustering Analysis Section -->
+                <section id="clusteringAnalysis" class="spa-section">
+                    <div
+                        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                        <h1 class="h3">患者聚类分析 (K-Means)</h1>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadClusteringData()">
+                            <i class="fas fa-sync-alt me-1"></i> 运行聚类
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="chart-cluster" style="height: 500px; width: 100%;"></div>
+                        </div>
+                    </div>
+                </section>
+                <!-- 模型性能模态框 -->
+                <div class="modal fade" id="performanceModal" tabindex="-1" aria-labelledby="performanceModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="performanceModalLabel">随机森林模型性能评估</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>分类报告</h6>
+                                        <div id="classification-report" style="font-size: 0.9rem;"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>混淆矩阵</h6>
+                                        <div id="confusion-matrix-chart" style="height: 350px;"></div>
+                                    </div>
+                                </div>
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h6>特征重要性</h6>
+                                        <div id="feature-importance-chart" style="height: 400px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bootstrap JS -->
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <!-- ECharts JS -->
+                <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+                <!-- Custom JS -->
+                <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

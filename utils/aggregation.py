@@ -1,11 +1,11 @@
 import os
 import pandas as pd
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 
 from . import db_utils
 
 
-def _default_age_bins() -> tuple(List[int], List[str]):
+def _default_age_bins() -> Tuple[List[int], List[str]]:
     bins = [0, 30, 40, 50, 60, 70, 200]
     labels = ["<30", "30-39", "40-49", "50-59", "60-69", "70+"]
     return bins, labels

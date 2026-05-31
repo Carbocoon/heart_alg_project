@@ -1,0 +1,143 @@
+/* 包含明暗适应的轻量、高级响应 UI 主题 */
+:root {
+    --primary-color: #0F4C81;
+    --primary-hover: #1A365D;
+    --secondary-color: #00A896;
+    --bg-color: #F8F9FA;
+    --text-color: #2D3748;
+    --sidebar-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --border-color: #E2E8F0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', -apple-system, sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+/* --- 侧边栏 --- */
+#sidebar {
+    min-width: 260px;
+    max-width: 260px;
+    background: var(--sidebar-bg);
+    min-height: 100vh;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.03);
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+}
+
+#sidebar .sidebar-header {
+    padding: 24px;
+    background: var(--primary-color);
+    color: #FFF;
+    text-align: center;
+}
+#sidebar .sidebar-header h4 { margin: 0; font-weight: 600; font-size: 1.3rem; }
+
+#sidebar ul.components { padding: 15px 0; }
+#sidebar ul li a {
+    padding: 16px 24px;
+    font-size: 1.05rem;
+    display: block;
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.2s ease-in-out;
+}
+#sidebar ul li a i { width: 25px; color: #718096; }
+
+#sidebar ul li a:hover, #sidebar ul li.active > a {
+    color: var(--primary-color);
+    background: #F1F5F9;
+    border-right: 4px solid var(--secondary-color);
+}
+#sidebar ul li.active > a i { color: var(--secondary-color); }
+
+/* --- 核心内容区 --- */
+#content {
+    margin-left: 260px;  /* 避开固定侧边栏 */
+    width: calc(100% - 260px);
+    padding: 40px;
+    min-height: 100vh;
+}
+
+.section-title {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #EDF2F7;
+    padding-bottom: 10px;
+}
+
+/* 卡片特效 */
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    margin-bottom: 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s;
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+}
+
+/* 指标块 */
+.metric-title {
+    color: #718096;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+.metric-value {
+    color: var(--primary-color);
+    font-size: 2.8rem;
+    font-weight: 800;
+}
+
+.chart-container {
+    height: 380px;
+    width: 100%;
+}
+
+/* 表单与按钮 */
+label { font-weight: 600; color: #4A5568; }
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #CBD5E0;
+    padding: 10px 15px;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 168, 150, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px 24px;
+    transition: all 0.3s ease;
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+    box-shadow: 0 5px 15px rgba(15, 76, 129, 0.3);
+    transform: translateY(-1px);
+}
+
+/* 表格 */
+.table th { background-color: #F8FAFC; color: #4A5568; font-weight: 600; }
+
+/* 页面切换控制 */
+.nav-section { display: none; animation: fadeIn 0.4s ease-in-out; }
+.nav-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

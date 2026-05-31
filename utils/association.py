@@ -170,18 +170,3 @@ __all__ = [
 ]
 
 
-def apriori_for_app(min_support: float = 0.05, min_confidence: float = 0.6, q: int = 4):
-    """为 Streamlit 应用返回可展示与下载的规则结果。
-
-    Returns:
-        rules_df: pandas.DataFrame - 包含 `antecedents_str`, `consequents_str`, `support`, `confidence`, `lift`
-        csv_bytes: bytes - 可直接作为下载数据传给 Streamlit 的 `data` 参数
-    """
-    res = run_apriori_on_heart(min_support=min_support, min_confidence=min_confidence, q=q)
-    rules = res.get("rules")
-    if rules is None or rules.empty:
-        return rules, b""
-
-    out_df = rules[["antecedents_str", "consequents_str", "support", "confidence", "lift"]].copy()
-    csv_bytes = out_df.to_csv(index=False).encode("utf-8")
-    return out_df, csv_bytes
